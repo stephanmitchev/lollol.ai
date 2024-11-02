@@ -16,8 +16,7 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', [GenericController::class, 'empty'])->name('empty');
-Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+Route::get('/', [ChatController::class, 'index'])->name('chat.index');
 Route::get('/privacy', [ChatController::class, 'privacy'])->name('chat.privacy');
 
 
