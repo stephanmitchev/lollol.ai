@@ -346,7 +346,7 @@ Responses that contain factually incorrect information about electoral systems a
         $response = $client->chat()->create($data);
 
         logger($response->message->content);
-        return $response->message->content == 'safe';
+        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7');
     }
 
 
