@@ -10,7 +10,7 @@
 @endstory
 
 @story('reset-cache')
-    cache 
+    cache
 @endstory
 
 
