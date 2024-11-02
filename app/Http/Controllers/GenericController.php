@@ -11,12 +11,7 @@ class GenericController extends Controller
      */
     public function empty(Request $request)
     {
-        if(request()->httpHost() == 'lollol.ai') {
-            return response()->redirectToRoute('chat.index');
-            
-        }
-       
-        return;
+         return response()->redirectToRoute('chat.index');
         
     }
 }
