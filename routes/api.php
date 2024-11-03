@@ -20,11 +20,3 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
-Route::get('/tag', [AnalyticsPingController::class, 'tag'])->name('tag');
-
-Route::post('/ping', [AnalyticsPingController::class, 'ping'])->name('ping');
-
-Route::post('/submitResults', [ApifyWebhookController::class, 'submitResults'])->name('submitResults');
-
-Route::post('/suggest', [AIController::class, 'suggest'])->name('suggest');
