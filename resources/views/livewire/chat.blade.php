@@ -72,7 +72,7 @@
         </div>
         @endif
 
-        <div class="w-full px-3 md:px-10 md:w-1/2 sm:w-[400px] md:w-[450px] lg:w-[500px] mx-auto mt-5">
+        <div class="w-full px-3 md:px-10 md:w-1/2 sm:w-[400px] md:w-[450px] lg:w-[500px] mx-auto mt-[80px]">
             <form wire:submit.prevent="sendPrompt" class="flex flex-row">
                 <input type="text" id="prompt" wire:model="prompt" class="w-full rounded-l-xl focus:border-gray-500 focus:ring-0" autofocus />
                 <button class="flex items-center justify-center bg-red-500 hover:bg-red-600 rounded-r-xl text-white px-4 py-1 flex-shrink-0" type="submit">
