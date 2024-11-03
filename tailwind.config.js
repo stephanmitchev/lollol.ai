@@ -15,33 +15,7 @@ export default {
             },
         },
     },
-    safelist: [
-        {
-            pattern: /w-.+/,
-        },
-        {
-            pattern: /rounded-.+/,
-        },
-        {
-            pattern: /text-.+/,
-        },
-        {
-            pattern: /p.?-.+/,
-        },
-        {
-            pattern: /m.?-.+/,
-        },
-        {
-            pattern: /shadow-.+/,
-        },
-        {
-            pattern: /border-.+/,
-        },
-        {
-            pattern: /ring-.+/,
-        },
-        
-    ],
+    
 
     plugins: [
         forms,
