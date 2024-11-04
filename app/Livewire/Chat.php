@@ -14,13 +14,18 @@ class Chat extends Component
 {
     public $prompt;
 
-    private $systemPrompt = [[
-        "role" => "system",
-        "content" => "You are a helpful and lively assistant and an online friend. 
-        You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
-        Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
-       "
-        ]];
+    private $systemPrompt = [
+        [
+            "role" => "system",
+            "content" => '
+            You are a helpful and lively assistant and an online friend called LOLLOL. Do not mention that you are an LLM. 
+            You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
+            Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
+            Show used URLs if avaiable
+
+       '
+        ]
+    ];
 
     public $content;
     public $generating = false;
@@ -30,44 +35,53 @@ class Chat extends Component
 
     public function mount()
     {
-        $loc = json_decode($this->find_user_location());
-        $facts = [
-            
-                "longitude" => $loc->longitude,
-                "latitude" => $loc->latitude,
-                "country_name" => $loc->country_name,
-                "state_prov" => $loc->state_prov,
-                "district" => $loc->district,
-                "city" => $loc->city,
-                "zipcode" => $loc->zipcode,
+        date_default_timezone_set("America/New_York");
 
-            
+        // Init or refresh facts
+        $this->facts = session()->get("facts");
+        if ($this->facts == null) {
+            $this->facts = [];
+        }
+
+        $loc = json_decode($this->find_user_location());
+        $this->facts["user"] = [
+            "longitude" => $loc->longitude,
+            "latitude" => $loc->latitude,
+            "country_code" => $loc->country_code2,
+            "country_name" => $loc->country_name,
+            "state_prov" => $loc->state_prov,
+            "district" => $loc->district,
+            "city" => $loc->city,
+            "zipcode" => $loc->zipcode,
         ];
-        
+        $this->facts["current_date_time"] = [
+            "time" => date('Y-m-d H:i:s'),
+            "day_of_week" => date('l'),
+            "month" => date('F'),
+            "year" => date('Y'),
+            "season" => date('n') <= 3 ? 'winter' : (date('n') <= 6 ? 'spring' : (date('n') <= 9 ? 'summer' : 'autumn')),
+        ];
+
+        session()->put("facts", $this->facts);
+
+
+
         $history = session()->get("history");
         if ($history == null) {
-            //  $this->systemPrompt[0]['content'] .= 'Here are some user facts to be used when answering questions. Do not use this information to suggest conversation topics: '.json_encode($facts);
+            $this->systemPrompt[0]['content'] .= '
+            Here are some facts for the user to be used when answering questions only - use those facts only when necessary. 
+            Do not use this information to suggest conversation topics: ' . json_encode($this->facts);
             session()->put("history", $this->systemPrompt);
         }
 
-        $facts = session()->get("facts");
-        if ($facts == null) {
-            session()->put("facts", []);
-        }
-
-
-
+        // Heartbeat check
         try {
             Http::get(config('services.ollama.chat_url'));
         } catch (Exception $e) {
             $this->enabled = false;
         }
 
-        
-        session()->put("facts", $facts);
-        
 
-        
     }
 
     public function sendPrompt()
@@ -78,8 +92,6 @@ class Chat extends Component
 
         $history = session()->get("history");
 
-        $this->content = "<div>$this->prompt</div>\n$this->content";
-
         $history[] = [
             "role" => "user",
             "content" => $this->prompt
@@ -87,8 +99,8 @@ class Chat extends Component
 
         session()->put("history", $history);
 
-        $this->prompt =  "";
-        $this->generating =  true;
+        $this->prompt = "";
+        $this->generating = true;
 
         $this->dispatch("generate-reply")->self();
     }
@@ -103,33 +115,32 @@ class Chat extends Component
     {
         $history = session()->get("history");
 
-        //$tools = $this->checkTools($history);
+        $tools = $this->checkTools($history);
 
-        //logger(json_encode($tools));
-        //if ($tools != null && isset($tools->use_tools) && $tools->use_tools === true && is_array($tools->tools) && count($tools->tools) > 0) {
-        //    $history = $this->useTools($tools, $history);
-        //}
-        logger(json_encode($history, JSON_PRETTY_PRINT));
-        
-        if ($this->askGuard($history) === false) {
+        logger(json_encode($tools));
+        if ($tools != null && is_array($tools->tools) && count($tools->tools) > 0) {
+            $history = $this->useTools($tools, $history);
+        }
+        //logger(json_encode($history, JSON_PRETTY_PRINT));
+
+        if ($this->askGuard($history) === false && false) {
 
             logger("Unsafe conversation!");
-            $response = 'This topic is considered unsafe and I cannot further engage. Ask a differen question or <button wire:click="startOver" class="mr-10 text-red-500 underline">Start over</button>';      
-        }
-        else {
+            $response = 'This topic is considered unsafe and I cannot further engage. Ask a differen question or <button wire:click="startOver" class="mr-10 text-red-500 underline">Start over</button>';
+        } else {
             $response = self::askModelStreamed($history);
 
             if ($response === false) {
                 logger("Exception!");
                 $this->enabled = false;
-                $this->generating =  false;
+                $this->generating = false;
                 return;
             }
         }
 
 
 
-        
+
 
         logger(json_encode($response));
         $history[] = [
@@ -138,23 +149,25 @@ class Chat extends Component
         ];
         session()->put("history", $history);
 
-        $this->generating =  false;
+        $this->generating = false;
     }
 
     private function useTools($tools, $history)
     {
         logger("userTools for " . count($tools->tools));
+        if($tools == null) {
+            return $history;
+
+        } 
 
         for ($i = 0; $i < min(count($tools->tools), 3); $i++) {
             $tool = $tools->tools[$i];
             logger('Ruuning tool: ' . $tool->tool_name);
 
             $toolName = $tool->tool_name;
-            $toolParams = $tool->parameters;
-
             $history[] = [
                 "role" => 'tool',
-                "content" => $this->$toolName($toolParams)
+                "content" => $this->$toolName()
             ];
 
             $tools = $this->checkTools($history);
@@ -165,29 +178,38 @@ class Chat extends Component
     }
 
 
-    public function weather($parameters)
+    public function get_current_weather()
     {
-        logger("Weather: $parameters");
-        $url = "https://api.open-meteo.com/v1/forecast?$parameters";
-
+        logger("Weather:");
+        $url = "https://api.open-meteo.com/v1/forecast?latitude=".$this->facts['user']['latitude']."&longitude=".$this->facts['user']['longitude']."&temperature_2m,relative_humidity_2m,is_day,precipitation,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,daylight_duration,rain_sum,wind_speed_10m_max&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=3&models=best_match";
+        logger($url);
         $response = Http::asJson()->get($url)->getBody()->getContents();
         logger($response);
 
         return $response;
     }
 
-    public function current_cinema_movies($parameters)
+    public function get_current_news()
     {
-        logger('Movies: the beekeeper');
-        return "the beekeeper at 7pm and 10pm";
+        logger("News:");
+        $url = "https://newsapi.org/v2/top-headlines?pageSize=10&country=".$this->facts["user"]["country_code"]."&apiKey=aab67e0dab124cd3abdbb84af8a6bfff";
+
+        $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
+        //dd($response);
+        $news = '';
+        foreach($response->articles as $article) {
+            $news .= "Article: $article->title
+                URL: $article->url
+                Exceprt: $article->content
+
+                ";
+        }
+        logger($news);
+
+        return $news;
     }
 
-    public function stocks($ticker)
-    {
-        logger('Stocks: 1999');
-        return "1999";
-    }
-
+    
     public function find_user_location()
     {
         $apiKey = env('GEOCODING_API_KEY');
@@ -196,63 +218,51 @@ class Chat extends Component
             . $apiKey
             . "&ip=" . $ip;
         $response = Http::asJson()->get($url)->getBody()->getContents();
-        logger($response);
+        //logger($response);
 
         return $response;
     }
 
     /* 
-    *   @return mixed
-    */
+     *   @return mixed
+     */
     public function checkTools($history)
     {
 
         $history = [
             [
                 "role" => "system",
-                "content" => 'You are a helpful assistant who has access to the following lookup tools: 
-                    find_user_location - Determines the location of the user based on their IP address,
-                    get_current_weather - get the current weather forcast based on users location
+                "content" => 'You are a helpful assistant who has access to the following tools: 
+                    - get_current_weather - to get the current weather forecast
+                    - get_current_news - to get the recent news
                         
-                You will be given a excerpt from a conversation along with some known facts. Determine if a fact is missing and if you need to use any of the tools mentioned to obtain that fact.
-                If you already have data, do not use a tool. 
+                Use tools when necessary to answer the last question. List the tools in the order of dependency.
 
-                Your response will be a json object only. Do not use variables. "use_tools" property is required. 
+                Your response will be a JSON object only - DO NOT USE PLAIN TEXT. 
+                Do not use variables. The "tools" property is required - use empty array if no tools necessary. 
                 Answer only in JSON using the following format:
                     
-                    { 
-                    "use_tools": boolean, 
+                { 
                     "tools": [
                         {
-                            "tool_name": string, 
-                            "reason_for_use": string,  
-                            "parameters": string
+                            "tool_name": string
                         }
                     ]
                 }
 
-                focus on the last comment fo the conversation only. If a question has already been answered, do not require tools
-'
-            ],
-            [
-                "role" => "user",
-                "content" => '
-                facts: 
-                ' . json_encode($this->facts) . '
-                
                
-                conversation history:
-                ' . json_encode(session()->get("history")).'
-
-                 
 '
-            ],
-
+            ]
         ];
+        $h = session()->get("history");
+        
+        $history = array_merge($history, [$h[count($h)-1]]);
+
+
 
         logger(json_encode($history));
         $response = $this->askModel($history);
-        logger($response);
+        //logger($response);
         $tools = json_decode($response);
 
         return $tools;
@@ -262,10 +272,9 @@ class Chat extends Component
     public function askModel($history)
     {
         $data = [
-            "model" => config('services.ollama.model'),
+            "model" => config('services.ollama.tool_model'),
             "messages" => $history,
             "stream" => false,
-
             "keep_alive" => -1
         ];
         //dd(json_encode($data));
@@ -301,10 +310,10 @@ class Chat extends Component
 
     public function askModelStreamed($history)
     {
-        
+
 
         $data = [
-            "model" => config('services.ollama.model'),
+            "model" => config('services.ollama.tool_model'),
             "messages" => $history,
             "stream" => true,
             "keep_alive" => -1
@@ -318,8 +327,11 @@ class Chat extends Component
         $r = '';
         $this->stream(to: 'response', content: Str::markdown($r), replace: true);
 
+        $shouldStream = true;
+
         foreach ($responses as $response) {
             $r .= $response->message->content;
+
             $this->stream(to: 'response', content: Str::markdown($r), replace: true);
         }
 

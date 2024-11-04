@@ -33,6 +33,7 @@ return [
     'ollama' => [
         'chat_url' => env('OLLAMA_CHAT_URL', 'http://localhost:11434'),
         'model' => env('OLLAMA_MODEL', 'llama3.1'),
+        'tool_model' => env('OLLAMA_TOOL_MODEL', 'llama3.2'),
         
     ],
    
