@@ -192,7 +192,7 @@ class Chat extends Component
     public function get_current_news()
     {
         logger("News:");
-        $url = "https://newsapi.org/v2/top-headlines?pageSize=10&country=".$this->facts["user"]["country_code"]."&apiKey=aab67e0dab124cd3abdbb84af8a6bfff";
+        $url = "https://newsapi.org/v2/top-headlines?pageSize=10&country=".$this->facts["user"]["country_code"]."&apiKey=".env('NEWS_API_KEY');
 
         $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
         //dd($response);
