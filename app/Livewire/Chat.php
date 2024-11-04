@@ -21,7 +21,7 @@ class Chat extends Component
             You are a helpful and lively assistant and an online friend called LOLLOL. Do not mention that you are an LLM. 
             You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
             Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
-            Show used URLs if avaiable
+            Show reference URLs if available
 
        '
         ]
@@ -200,7 +200,7 @@ class Chat extends Component
         foreach($response->articles as $article) {
             $news .= "Article: $article->title
                 URL: $article->url
-                Exceprt: $article->content
+                Excerpt: $article->content
 
                 ";
         }
