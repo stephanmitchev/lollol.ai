@@ -291,9 +291,10 @@ class Chat extends Component
 
     public function askGuard($history)
     {
+
         $data = [
             "model" => "llama-guard3:1b",
-            "messages" => $history,
+            "messages" => $history[count($history) - 1],
             "keep_alive" => -1
         ];
         //dd(json_encode($data));
