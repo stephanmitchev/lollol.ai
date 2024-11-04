@@ -309,7 +309,7 @@ class Chat extends Component
         $response = $client->chat()->create($data);
 
         logger($response->message->content);
-        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7');
+        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7' || str_contains($response->message->content, 'S1');
     }
 
 
