@@ -294,7 +294,7 @@ class Chat extends Component
 
         $data = [
             "model" => "llama-guard3:1b",
-            "messages" => $history[count($history) - 1],
+            "messages" => [$history[count($history) - 1]],
             "keep_alive" => -1
         ];
         //dd(json_encode($data));
