@@ -123,7 +123,7 @@ class Chat extends Component
         }
         //logger(json_encode($history, JSON_PRETTY_PRINT));
 
-        if ($this->askGuard($history) === false && false) {
+        if ($this->askGuard($history) === false) {
 
             logger("Unsafe conversation!");
             $response = 'This topic is considered unsafe and I cannot further engage. Ask a differen question or <button wire:click="startOver" class="mr-10 text-red-500 underline">Start over</button>';
