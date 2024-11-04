@@ -260,9 +260,9 @@ class Chat extends Component
 
 
 
-        logger(json_encode($history));
+        //logger(json_encode($history));
         $response = $this->askModel($history);
-        //logger($response);
+        logger($response);
         $tools = json_decode($response);
 
         return $tools;
