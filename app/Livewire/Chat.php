@@ -21,12 +21,7 @@ class Chat extends Component
             You are a helpful and lively assistant and an online friend called LOLLOL. Do not mention that you are an LLM. 
             You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
             Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
-            Show reference URLs if available.
-
-            You also have access to the following tools: 
-                    - get_current_weather - realtime access to get the current weather and the forecast for the next 2 days
-                    - get_current_news - realtime access to get the recent news
-
+            Show citation URLs when available.
        '
         ]
     ];
@@ -166,12 +161,13 @@ class Chat extends Component
 
         for ($i = 0; $i < min(count($tools->tools), 3); $i++) {
             $tool = $tools->tools[$i];
-            logger('Ruuning tool: ' . $tool->tool_name);
+            logger('Running tool: ' . $tool->name);
 
-            $toolName = $tool->tool_name;
+            $name = $tool->name;
+            $parameters = $tool->parameters ?? null;
             $history[] = [
                 "role" => 'tool',
-                "content" => $this->$toolName()
+                "content" => $parameters ? $this->$name($parameters) : $this->$name()
             ];
 
             $tools = $this->checkTools($history);
@@ -185,18 +181,52 @@ class Chat extends Component
     public function get_current_weather()
     {
         logger("Weather:");
-        $url = "https://api.open-meteo.com/v1/forecast?latitude=".$this->facts['user']['latitude']."&longitude=".$this->facts['user']['longitude']."&temperature_2m,relative_humidity_2m,is_day,precipitation,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,daylight_duration,rain_sum,wind_speed_10m_max&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=3&models=best_match";
+        $url = "https://api.open-meteo.com/v1/forecast?latitude=".$this->facts['user']['latitude']."&longitude=".$this->facts['user']['longitude']."&current=temperature_2m,rain,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FNew_York&models=best_match";
         logger($url);
-        $response = Http::asJson()->get($url)->getBody()->getContents();
-        logger($response);
+        $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
+        $weather = '';
+        for($i = 0; $i < 5; $i ++) {
+            $weather .= "
+            Day: " . $response->daily->time[$i] ."
+            Max Temperature: " . $response->daily->temperature_2m_max[$i] ." ". $response->daily_units->temperature_2m_max ." 
+            Min Temperature: " . $response->daily->temperature_2m_min[$i] ." ". $response->daily_units->temperature_2m_min ." 
+            Total Precipitation: " . $response->daily->precipitation_sum[$i] ." ". $response->daily_units->precipitation_sum ." 
+            Wind Speed: " . $response->daily->wind_speed_10m_max[$i] ." ". $response->daily_units->wind_speed_10m_max ." 
+            Wind Direction: " . $response->daily->wind_direction_10m_dominant[$i] ." ". $response->daily_units->wind_direction_10m_dominant ." 
+            
+            ";
+        }
+        
+        logger($weather);
 
-        return $response;
+        return $weather;
     }
 
-    public function get_current_news()
+    public function get_current_news_top_headlines()
     {
         logger("News:");
         $url = "https://newsapi.org/v2/top-headlines?pageSize=10&country=".$this->facts["user"]["country_code"]."&apiKey=".env('NEWS_API_KEY');
+
+        $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
+        //dd($response);
+        $news = '';
+        foreach($response->articles as $article) {
+            $news .= "Article: $article->title
+                URL: $article->url
+                Excerpt: $article->content
+
+                ";
+        }
+        logger($news);
+
+        return $news;
+    }
+
+    public function get_current_news_by_topic($topic)
+    {
+        logger("News: $topic->topic");
+        $url = "https://newsapi.org/v2/top-headlines?q=".urlencode($topic->topic)."&pageSize=10&apiKey=".env('NEWS_API_KEY');
+        logger($url);
 
         $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
         //dd($response);
@@ -237,10 +267,37 @@ class Chat extends Component
             [
                 "role" => "system",
                 "content" => 'You are a helpful assistant who has access to the following tools: 
-                    - get_current_weather - to get the current weather and the forecast for the next 2 days
-                    - get_current_news - to get the recent news
-                        
-                Use tools when necessary to answer the last question. List the tools in the order of dependency.
+                [
+                    {
+                        "name": "get_current_weather",
+                        "description": "To get the current weather and the 5-day forecast ",
+                        "parameters": null
+                    },
+                    {
+                        "name": "get_current_news_top_headlines",
+                        "description": "To get the recent top news headlines",
+                        "parameters": null
+                    },
+                    {
+                        "name": "get_current_news_by_topic",
+                        "description": "Use only to get the recent news for a SPECIFIC TOPIC - do not use without topic",
+                        "parameters": {
+                           "required": [
+                                "topic"
+                            ], 
+                            "properties": {
+                                "topic": {
+                                    "type": "string",
+                                    "description": "The topic for the news the user is interested in"
+                                }
+                            }
+                        },
+                            
+                    },
+                    
+                ]
+                 
+                Use tools only when necessary to answer the last question. List the tools in the order of dependency.
 
                 Your response will be a JSON object only - DO NOT USE PLAIN TEXT. 
                 Do not use variables. The "tools" property is required - use empty array if no tools necessary. 
@@ -249,7 +306,8 @@ class Chat extends Component
                 { 
                     "tools": [
                         {
-                            "tool_name": string
+                            "name": string
+                            "parameters": string
                         }
                     ]
                 }
@@ -309,7 +367,7 @@ class Chat extends Component
         $response = $client->chat()->create($data);
 
         logger($response->message->content);
-        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7') || str_contains($response->message->content, 'S1');
+        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7') || str_contains($response->message->content, 'S1')|| str_contains($response->message->content, 'S8') || str_contains($response->message->content, 'S5');
     }
 
 
