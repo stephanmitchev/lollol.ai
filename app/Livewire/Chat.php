@@ -122,11 +122,11 @@ class Chat extends Component
         }
 
         // Heartbeat check
-        try {
+        /*try {
             Http::get(config('services.ollama.chat_url'));
         } catch (Exception $e) {
             $this->enabled = false;
-        }
+        }*/
 
 
     }
