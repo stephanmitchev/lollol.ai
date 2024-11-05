@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Illuminate\Support\Str;
+use OpenAI\Laravel\Facades\OpenAI;
 
 class Chat extends Component
 {
@@ -21,9 +22,56 @@ class Chat extends Component
             You are a helpful and lively assistant and an online friend called LOLLOL. Do not mention that you are an LLM. 
             You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
             Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
-            Show citation URLs when available.
-       '
+            Include available URLs in your responses if they are relevant.
+            Be kind, be funny, and have fun.
+            
+           
+
+                 
+                    '
         ]
+    ];
+
+    public $tools = [
+        [
+            "type" => "function",
+            "function" => [
+                "name" => "get_current_weather",
+                "description" => "To get the current weather and the 5-day forecast ",
+                "parameters" => null
+            ]
+            
+        ],
+        [
+            
+            "type" => "function",
+            "function" => [
+                "name" => "get_current_news_top_headlines",
+                "description" => "To get the recent top news headlines",
+                "parameters" => null
+            ]
+        ],
+        [
+            "type" => "function",
+            "function" => [
+                "name" => "get_current_news_by_topic",
+                "description" => "Use only to get the recent news for a SPECIFIC TOPIC - do not use without topic",
+                "parameters" => [
+                    "type" => "object",     
+                    "required" => [
+                        "topic"
+                    ],
+                    "properties" => [
+                        "topic" => [
+                            "type" => "string",
+                            "description" => "The topic for the news the user is interested in"
+                        ]
+                    ]
+                ],
+            ],
+                
+        ],
+        
     ];
 
     public $content;
@@ -114,20 +162,20 @@ class Chat extends Component
     {
         $history = session()->get("history");
 
-        $tools = $this->checkTools($history);
+        //$tools = $this->checkTools($history);
 
-        logger(json_encode($tools));
-        if ($tools != null && is_array($tools->tools) && count($tools->tools) > 0) {
-            $history = $this->useTools($tools, $history);
-        }
+        //logger(json_encode($tools));
+        //if ($tools != null && is_array($tools->tools) && count($tools->tools) > 0) {
+        //    $history = $this->useTools($tools, $history);
+        //}
         //logger(json_encode($history, JSON_PRETTY_PRINT));
 
-        if ($this->askGuard($history) === false) {
+        if (false && $this->askGuard($history) === false) {
 
             logger("Unsafe conversation!");
             $response = 'This topic is considered unsafe and I cannot further engage. Ask a differen question or <button wire:click="startOver" class="mr-10 text-red-500 underline">Start over</button>';
         } else {
-            $response = self::askModelStreamed($history);
+            $response = self::askModel($history);
 
             if ($response === false) {
                 logger("Exception!");
@@ -135,6 +183,8 @@ class Chat extends Component
                 $this->generating = false;
                 return;
             }
+
+            
         }
 
 
@@ -224,8 +274,8 @@ class Chat extends Component
 
     public function get_current_news_by_topic($topic)
     {
-        logger("News: $topic->topic");
-        $url = "https://newsapi.org/v2/top-headlines?q=".urlencode($topic->topic)."&pageSize=10&apiKey=".env('NEWS_API_KEY');
+        logger("News: $topic");
+        $url = "https://newsapi.org/v2/top-headlines?q=".urlencode($topic)."&pageSize=10&apiKey=".env('NEWS_API_KEY');
         logger($url);
 
         $response = json_decode(Http::asJson()->get($url)->getBody()->getContents());
@@ -334,20 +384,55 @@ class Chat extends Component
     public function askModel($history)
     {
         $data = [
-            "model" => config('services.ollama.tool_model'),
+            "model" => 'gpt-4o-mini',
             "messages" => $history,
-            "stream" => false,
-            "keep_alive" => -1
+            "tools" => $this->tools,
         ];
-        //dd(json_encode($data));
+        $response = OpenAI::chat()->create($data);
 
-        $r = "";
+        $r = '';
+        if (count($response->choices[0]->message->toolCalls) > 0) {
+            $history[] = [
+                "role" => "assistant",
+                "tool_calls" => $response->choices[0]->message->toolCalls,
+            ];
+            foreach($response->choices[0]->message->toolCalls as $toolCall) {
+                if ($toolCall->type == 'function') {
+                    $fn = $toolCall->function->name;
+                    $args = $toolCall->function->arguments;
+                    $result = $this->$fn($args);
+                    
+                    $history[] = [
+                        "role" => "tool",
+                        "tool_call_id" => $toolCall->id,
+                        "content" => $result
+                    ];
+                }
+                //dd($toolCall);
+            }
 
-        $client = \ArdaGnsrn\Ollama\Ollama::client(env('OLLAMA_CHAT_URL'));
-        $response = $client->chat()->create($data);
+            $data = [
+                "model" => 'gpt-4o-mini',
+                "messages" => $history,
+                "tools" => $this->tools,
+            ];
+            $responses = OpenAI::chat()->createStreamed($data);
+            
+            $this->stream(to: 'response', content: Str::markdown($r), replace: true);
+            foreach ($responses as $response) {
+                $r .= $response->choices[0]->delta->content;
+                $this->stream(to: 'response', content: Str::markdown($r), replace: true);
+            }
 
 
-        return $response->message->content;
+        }
+        else {
+            $r = $response->choices[0]->message->content;
+        }
+        
+
+        session()->put("history", $history);
+        return $r;
     }
 
 
@@ -376,27 +461,29 @@ class Chat extends Component
 
 
         $data = [
-            "model" => config('services.ollama.tool_model'),
+            "model" => 'gpt-4o-mini',
             "messages" => $history,
-            "stream" => true,
-            "keep_alive" => -1
+            "tools" => $this->tools
         ];
-        //dd(json_encode($data));
+        
 
         $r = "";
 
-        $client = \ArdaGnsrn\Ollama\Ollama::client(config('services.ollama.chat_url'));
-        $responses = $client->chat()->createStreamed($data);
+        $responses = OpenAI::chat()->createStreamed($data);
         $r = '';
         $this->stream(to: 'response', content: Str::markdown($r), replace: true);
-
         $shouldStream = true;
 
         foreach ($responses as $response) {
-            $r .= $response->message->content;
+            //dd($response);
+            $r .= $response->choices[0]->delta->content;
 
             $this->stream(to: 'response', content: Str::markdown($r), replace: true);
         }
+
+        dd($responses);
+        
+
 
         return $r;
     }
@@ -417,11 +504,14 @@ class Chat extends Component
         $this->content = "";
 
         foreach ($history as $item) {
-            if ($item['role'] == 'user') {
-                $this->content = "<div class='px-3 py-1'><div style='text-align:right'>" . $item['content'] . "</div></div>\n$this->content";
-            } else if ($item['role'] == 'assistant') {
-                $this->content = "<div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 ml-3 mb-5  border rounded-xl p-3 shadow-lg'>" . Str::markdown($item['content']) . "</div>\n$this->content";
+            if (isset($item['content'])) {
+                if ($item['role'] == 'user') {
+                    $this->content = "<div class='px-3 py-1'><div style='text-align:right'>" . $item['content'] . "</div></div>\n$this->content";
+                } else if ($item['role'] == 'assistant') {
+                    $this->content = "<div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 ml-3 mb-5  border rounded-xl p-3 shadow-lg'>" . Str::markdown($item['content']) . "</div>\n$this->content";
+                }
             }
+            
         }
     }
 
