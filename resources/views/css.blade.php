@@ -87,7 +87,7 @@
 
             <div class="w-full self-center text-center text-red-500 font-sans text-sm my-5">
                 
-                <button wire:click="startOver" class="mr-10">Start over</button>
+                <button wire:click="startOver" class="mr-10 mx-3 ">Start over</button>
                
                 <a href="{{ route('chat.privacy') }}">Privacy Policy</button>
             </div>

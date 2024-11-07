@@ -36,12 +36,8 @@
     @livewireStyles
     @vite('resources/css/app.css')
 </head>
-<body class="max-w-full w-full">
-
-    <div class=" w-full">
+<body>
     {{ $slot }}
-    </div>
-
     @livewireScripts
 </body>
 </html>

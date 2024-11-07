@@ -4,7 +4,7 @@
         @if($enabled)
         @if($content)
         <div class="w-1/3 self-left text-center text-red-500 font-sans text-[60px] lg:text-[60px]">
-        <div class="mx-10 w-[150px]">
+            <div class="m-5 w-[120px]">
                 <img src="/images/logo-web.png" />  
             </div>  
         </div>
@@ -14,9 +14,10 @@
                 margin-top: 0.75rem;
             }
         </style>
-        <div class="w-full h-[80%] pr-5 overflow-auto flex flex-col-reverse gap-4">
+        
+        <div class="w-full flex-grow overflow-auto flex flex-col-reverse gap-4 mb-3 px-5">
             @if($generating)
-            <div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 ml-3 mb-5  border rounded-xl p-3 shadow-lg' wire:stream="response">
+            <div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 mb-5  border rounded-xl p-3 shadow-lg' wire:stream="response">
                 <div class="w-10 pt-[0.75rem]"><svg viewBox="0 0 50 20">
                         <g>
                             <circle id="dot1" cx="10" cy="10" r="5" fill="#aaa"></circle>
@@ -61,18 +62,20 @@
             {!! $content !!}
 
         </div>
+        
+
         @else
 
-        <div class="w-full self-center text-center text-red-500 leading-none font-sans">
-            <div class=" w-[300px] md:w-[400px] lg:w-[500px] mx-auto">
-                <img src="/images/logo-web.png" />  
+            <div class="w-full self-center text-center text-red-500 leading-none font-sans">
+                <div class=" w-[300px] md:w-[400px] lg:w-[500px] mx-auto">
+                    <img src="/images/logo-web.png" />  
+                </div>
+                
             </div>
-            
-        </div>
         @endif
 
-        <div class="w-full px-3 md:px-10 md:w-1/2 sm:w-[400px] md:w-[450px] lg:w-[500px] mx-auto @if($content) @else mt-[80px] @endif">
-            <form wire:submit.prevent="sendPrompt" class="flex flex-row">
+        <div class="w-full px-5 md:px-10 sm:w-[400px] md:w-[450px] lg:w-[500px] mx-auto @if($content) @else mt-[80px] @endif">
+            <form wire:submit.prevent="sendPrompt" class="flex flex-row mb-3">
                 <input type="text" id="prompt" wire:model="prompt" class="w-full rounded-l-xl focus:border-gray-500 focus:ring-0" autofocus />
                 <button class="flex items-center justify-center bg-red-500 hover:bg-red-600 rounded-r-xl text-white px-4 py-1 flex-shrink-0" type="submit">
                     <span>Ask</span>
@@ -84,7 +87,7 @@
                 </button>
             </form>
 
-            <div class="w-full self-center text-center text-red-500 font-sans text-sm my-5">
+            <div class="w-full self-center text-center text-red-500 font-sans text-sm mb-3">
                 @if($content)
                 <button wire:click="startOver" class="mr-10">Start over</button>
                 @endif
@@ -95,7 +98,11 @@
         @endif
 
     </div>
-                            
-
-
+                        
 </div>
+<script>
+
+Livewire.on('generate-reply', ({ postId }) => {
+    document.getElementById('prompt').focus();
+})
+</script>

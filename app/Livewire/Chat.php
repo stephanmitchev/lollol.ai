@@ -506,9 +506,9 @@ class Chat extends Component
         foreach ($history as $item) {
             if (isset($item['content'])) {
                 if ($item['role'] == 'user') {
-                    $this->content = "<div class='px-3 py-1'><div style='text-align:right'>" . $item['content'] . "</div></div>\n$this->content";
+                    $this->content = "<div class='py-1'><div style='text-align:right'>" . $item['content'] . "</div></div>\n$this->content";
                 } else if ($item['role'] == 'assistant') {
-                    $this->content = "<div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 ml-3 mb-5  border rounded-xl p-3 shadow-lg'>" . Str::markdown($item['content']) . "</div>\n$this->content";
+                    $this->content = "<div class='w-full md:w-4/5 lg:w-2/3 px-5 pb-4 pt-1 mb-5  border rounded-xl p-3 shadow-lg'>" . Str::markdown($item['content']) . "</div>\n$this->content";
                 }
             }
             
