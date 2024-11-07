@@ -1,4 +1,4 @@
-<div class="flex flex-col items-center justify-center bg-gray--400 w-full h-screen">
+<div class="flex flex-col items-center justify-center bg-gray--400 w-full h-dvh">
     <div class="w-full @if($content) h-full @else h-2/3  @endif lg:w-2/3  bg-gray--500 justify-center flex flex-col">
 
         @if($enabled)
