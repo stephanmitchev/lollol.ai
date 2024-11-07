@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head class="h-dvh">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 
@@ -37,7 +37,7 @@
     @livewireStyles
     @vite('resources/css/app.css')
 </head>
-<body class="h-dvh">
+<body>
     {{ $slot }}
     @livewireScripts
 </body>
