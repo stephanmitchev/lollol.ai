@@ -4,10 +4,9 @@
         @if($enabled)
         @if($content)
         <div class="w-1/3 self-left text-center text-red-500 font-sans text-[60px] lg:text-[60px]">
-            lollol
-        </div>
-        <div class="w-1/3 -mt-5 self-left text-center text-red-500 font-sans text-[10px] lg:text-[10px]">
-            
+        <div class="mx-10 w-[150px]">
+                <img src="/images/logo-web.png" />  
+            </div>  
         </div>
 
         <style>
@@ -64,10 +63,10 @@
         </div>
         @else
 
-        <div class="w-full self-center text-center text-red-500 leading-none font-sans text-[160px] md:text-[250px] lg:text-[300px]">
-            lollol
-        </div>
-        <div class="w-full self-center text-center text-red-500 font-sans text-[18px] leading-none text-[10px] md:text-[15px] lg:text-[20px] -mt-2 md:-mt-5">
+        <div class="w-full self-center text-center text-red-500 leading-none font-sans">
+            <div class=" w-[300px] md:w-[400px] lg:w-[500px] mx-auto">
+                <img src="/images/logo-web.png" />  
+            </div>
             
         </div>
         @endif

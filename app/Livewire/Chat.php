@@ -388,7 +388,7 @@ class Chat extends Component
             "messages" => $history,
             "tools" => $this->tools,
         ];
-        $response = OpenAI::chat()->create($data);
+        $response = OpenAI::assistants()->create($data);
 
         $r = '';
         if (count($response->choices[0]->message->toolCalls) > 0) {
