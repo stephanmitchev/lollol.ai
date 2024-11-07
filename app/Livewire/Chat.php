@@ -297,7 +297,7 @@ class Chat extends Component
     public function find_user_location()
     {
         $apiKey = env('GEOCODING_API_KEY');
-        $ip = request()->ip() == '127.0.0.1' ? '73.28.84.93' : request()->ip();
+        $ip = request()->ip() == '127.0.0.1' || str_starts_with(request()->ip() , '192.168.' )? '73.28.84.93' : request()->ip();
         $url = "https://api.ipgeolocation.io/ipgeo?apiKey="
             . $apiKey
             . "&ip=" . $ip;

@@ -77,7 +77,7 @@
         <div class="w-full px-5 md:px-10 sm:w-[400px] md:w-[450px] lg:w-[500px] mx-auto @if($content) @else mt-[80px] @endif">
             <form wire:submit.prevent="sendPrompt" class="flex flex-row mb-3">
                 <input type="text" id="prompt" wire:model="prompt" class="w-full rounded-l-xl focus:border-gray-500 focus:ring-0" autofocus />
-                <button class="flex items-center justify-center bg-red-500 hover:bg-red-600 rounded-r-xl text-white px-4 py-1 flex-shrink-0" type="submit">
+                <button class="flex items-center justify-center bg-themeRed hover:bg-themeRed rounded-r-xl text-white px-4 py-1 flex-shrink-0" type="submit">
                     <span>Ask</span>
                     <span class="ml-2">
                         <svg class="w-4 h-4 transform rotate-45 -mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

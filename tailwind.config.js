@@ -13,6 +13,10 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                themeRed: '#ef4444',
+                themeNavy: '#2a2aa3'
+            }
         },
     },
     
@@ -21,6 +25,5 @@ export default {
         forms,
         
         
-    ],
+    ]
 };
-
