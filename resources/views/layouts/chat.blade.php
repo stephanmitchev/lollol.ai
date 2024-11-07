@@ -2,7 +2,8 @@
 <html lang="en">
 <head class="h-dvh">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+
     <title>LOLLOL</title>
     
     <!-- Google tag (gtag.js) -->
