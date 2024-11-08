@@ -103,8 +103,12 @@
 @script
 <script>
 
+
 window.Livewire.on('generate-reply', ({ postId }) => {
     document.getElementById('prompt').focus();
-})
+});
+document.addEventListener("DOMContentLoaded", (event) => {
+    document.getElementById('prompt').focus();
+});
 </script>
 @endscript
