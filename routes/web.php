@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\GenericController;
+use App\Http\Controllers\IntegrationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,6 +20,8 @@ use Inertia\Inertia;
 Route::get('/chat', [GenericController::class, 'empty'])->name('empty');
 Route::get('/', [ChatController::class, 'index'])->name('chat.index');
 Route::get('/privacy', [ChatController::class, 'privacy'])->name('chat.privacy');
+
+Route::get('/integration/js', [IntegrationController::class, 'js'])->name('integration.js   ');
 
 
 /*
