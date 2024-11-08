@@ -22,7 +22,7 @@ class Chat extends Component
             You are a helpful and lively assistant and an online friend called LOLLOL. Do not mention that you are an LLM. 
             You will respond with non-offensive remarks only and will kindly refuse to reply to offensive language.
             Do not give legal advice. Do not give medical advice. Do not engage in offensive conversations.
-            Include available URLs in your responses if they are relevant.
+            Include available URLs in your responses if they are relevant. 
             Be kind, be funny, and have fun.
             
            
@@ -49,6 +49,26 @@ class Chat extends Component
                 "name" => "get_current_news_top_headlines",
                 "description" => "To get the recent top news headlines",
                 "parameters" => null
+            ]
+        ],
+        [
+            
+            "type" => "function",
+            "function" => [
+                "name" => "get_stock_quote",
+                "description" => "To get the current stock price and additional details for a stock symbol",
+                "parameters" => [
+                    "type" => "object",     
+                    "required" => [
+                        "symbol"
+                    ],
+                    "properties" => [
+                        "symbol" => [
+                            "type" => "string",
+                            "description" => "The symbol of the stock"
+                        ]
+                    ]
+                ],
             ]
         ],
         [
@@ -120,15 +140,6 @@ class Chat extends Component
             Do not use this information to suggest conversation topics: ' . json_encode($this->facts);
             session()->put("history", $this->systemPrompt);
         }
-
-        // Heartbeat check
-        /*try {
-            Http::get(config('services.ollama.chat_url'));
-        } catch (Exception $e) {
-            $this->enabled = false;
-        }*/
-
-
     }
 
     public function sendPrompt()
@@ -162,14 +173,6 @@ class Chat extends Component
     {
         $history = session()->get("history");
 
-        //$tools = $this->checkTools($history);
-
-        //logger(json_encode($tools));
-        //if ($tools != null && is_array($tools->tools) && count($tools->tools) > 0) {
-        //    $history = $this->useTools($tools, $history);
-        //}
-        //logger(json_encode($history, JSON_PRETTY_PRINT));
-
         if (false && $this->askGuard($history) === false) {
 
             logger("Unsafe conversation!");
@@ -182,14 +185,8 @@ class Chat extends Component
                 $this->enabled = false;
                 $this->generating = false;
                 return;
-            }
-
-            
+            }    
         }
-
-
-
-
 
         logger(json_encode($response));
         $history[] = [
@@ -293,6 +290,21 @@ class Chat extends Component
         return $news;
     }
 
+
+    public function get_stock_quote($symbol)
+    {
+        $symbol = json_decode($symbol)->symbol;
+        
+        logger("Stock: $symbol");
+        $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=".urlencode($symbol)."&apikey=".env('STOCK_API_KEY');
+        logger($url);
+
+        $response = Http::asJson()->get($url)->getBody()->getContents();
+        
+
+        return $response;
+    }
+
     
     public function find_user_location()
     {
@@ -307,78 +319,6 @@ class Chat extends Component
         return $response;
     }
 
-    /* 
-     *   @return mixed
-     */
-    public function checkTools($history)
-    {
-
-        $history = [
-            [
-                "role" => "system",
-                "content" => 'You are a helpful assistant who has access to the following tools: 
-                [
-                    {
-                        "name": "get_current_weather",
-                        "description": "To get the current weather and the 5-day forecast ",
-                        "parameters": null
-                    },
-                    {
-                        "name": "get_current_news_top_headlines",
-                        "description": "To get the recent top news headlines",
-                        "parameters": null
-                    },
-                    {
-                        "name": "get_current_news_by_topic",
-                        "description": "Use only to get the recent news for a SPECIFIC TOPIC - do not use without topic",
-                        "parameters": {
-                           "required": [
-                                "topic"
-                            ], 
-                            "properties": {
-                                "topic": {
-                                    "type": "string",
-                                    "description": "The topic for the news the user is interested in"
-                                }
-                            }
-                        },
-                            
-                    },
-                    
-                ]
-                 
-                Use tools only when necessary to answer the last question. List the tools in the order of dependency.
-
-                Your response will be a JSON object only - DO NOT USE PLAIN TEXT. 
-                Do not use variables. The "tools" property is required - use empty array if no tools necessary. 
-                Answer only in JSON using the following format:
-                    
-                { 
-                    "tools": [
-                        {
-                            "name": string
-                            "parameters": string
-                        }
-                    ]
-                }
-
-               
-'
-            ]
-        ];
-        $h = session()->get("history");
-        
-        $history = array_merge($history, [$h[count($h)-1]]);
-
-
-
-        //logger(json_encode($history));
-        $response = $this->askModel($history);
-        logger($response);
-        $tools = json_decode($response);
-
-        return $tools;
-    }
 
 
     public function askModel($history)
@@ -434,61 +374,6 @@ class Chat extends Component
         session()->put("history", $history);
         return $r;
     }
-
-
-    public function askGuard($history)
-    {
-
-        $data = [
-            "model" => "llama-guard3:1b",
-            "messages" => [$history[count($history) - 1]],
-            "keep_alive" => -1
-        ];
-        //dd(json_encode($data));
-
-        $r = "";
-
-        $client = \ArdaGnsrn\Ollama\Ollama::client(config('services.ollama.chat_url'));
-        $response = $client->chat()->create($data);
-
-        logger($response->message->content);
-        return $response->message->content == 'safe' || str_contains($response->message->content, 'S7') || str_contains($response->message->content, 'S1')|| str_contains($response->message->content, 'S8') || str_contains($response->message->content, 'S5');
-    }
-
-
-    public function askModelStreamed($history)
-    {
-
-
-        $data = [
-            "model" => 'gpt-4o-mini',
-            "messages" => $history,
-            "tools" => $this->tools
-        ];
-        
-
-        $r = "";
-
-        $responses = OpenAI::chat()->createStreamed($data);
-        $r = '';
-        $this->stream(to: 'response', content: Str::markdown($r), replace: true);
-        $shouldStream = true;
-
-        foreach ($responses as $response) {
-            //dd($response);
-            $r .= $response->choices[0]->delta->content;
-
-            $this->stream(to: 'response', content: Str::markdown($r), replace: true);
-        }
-
-        dd($responses);
-        
-
-
-        return $r;
-    }
-
-
 
     public function getResponse()
     {

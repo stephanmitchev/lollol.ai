@@ -6,6 +6,7 @@ import forms from '@tailwindcss/forms';
 export default {
     content: [
         './resources/views/**/*.blade.php',
+        './app/Livewire/**/*.php',
     ],
 
     theme: {
