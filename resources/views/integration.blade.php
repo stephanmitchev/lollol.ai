@@ -1,5 +1,3 @@
-<script>
-    document.addEventListener("DOMContentLoaded", (event) => {
-        console.log("LOLLOL Integration Loaded...");
-    })
-</script>
+document.addEventListener("DOMContentLoaded", (event) => {
+    console.log("LOLLOL Integration Loaded...");
+})
