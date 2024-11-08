@@ -22,8 +22,7 @@ Route::get('/chat', [GenericController::class, 'empty'])->name('empty');
 Route::get('/', [ChatController::class, 'index'])->name('chat.index');
 Route::get('/privacy', [ChatController::class, 'privacy'])->name('chat.privacy');
 
-Route::get('/integration/js', [IntegrationController::class, 'js'])
-->withoutMiddleware([StartSession::class])->name('integration.js');
+
 
 
 /*
