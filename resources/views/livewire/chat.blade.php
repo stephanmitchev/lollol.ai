@@ -100,9 +100,11 @@
     </div>
                         
 </div>
+@script
 <script>
 
-Livewire.on('generate-reply', ({ postId }) => {
+window.Livewire.on('generate-reply', ({ postId }) => {
     document.getElementById('prompt').focus();
 })
 </script>
+@endscript
