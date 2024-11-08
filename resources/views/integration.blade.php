@@ -11,7 +11,3 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
     init();
 });
-";
-
-    }();
-})
