@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
         button.style.cssText = "position:absolute; bottom:2rem; right: 2rem; width: 80px; height: 80px; background-color:white; color: #ef4444; border-radius:50%; border-color:#ccc; font-size:1.5rem; box-shadow: rgba(0, 0, 0, 0.3) 0px 2px 6px;";
         button.addEventListener('click', () => {
             //alert('lollol');
-            document.getElementById("lollol_integration_iframe").display = "block";
+            document.getElementById("lollol_integration_iframe").style.display = "block";
         });
     };
 
