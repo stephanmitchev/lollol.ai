@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
             const iframe = document.getElementById("lollol_integration_iframe");
             if (button.textContent == 'lollol') {
                 iframe.style.display = "block";
-                button.textContent = "&#x274c;";
+                button.textContent = "✗";
             }
             else {
                 iframe.style.display = "none";
