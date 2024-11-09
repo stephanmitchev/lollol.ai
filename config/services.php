@@ -14,13 +14,6 @@ return [
     |
     */
 
-    'mailgun' => [
-        'domain' => env('MAILGUN_DOMAIN'),
-        'secret' => env('MAILGUN_SECRET'),
-        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
-        'scheme' => 'https',
-    ],
-
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -30,12 +23,16 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-    'ollama' => [
-        'chat_url' => env('OLLAMA_CHAT_URL', 'http://localhost:11434'),
-        'model' => env('OLLAMA_MODEL', 'llama3.1'),
-        'tool_model' => env('OLLAMA_TOOL_MODEL', 'llama3.2'),
-        
+
+    'resend' => [
+        'key' => env('RESEND_KEY'),
     ],
-   
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
+    ],
 
 ];
